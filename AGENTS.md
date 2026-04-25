@@ -10,21 +10,41 @@
 ## UI/UX Implementation Notes (Critical for Agent)
 - **Priority**: Super trendy UI with Gen Z naming/words - this is the #1 focus
 - **Design System**: Custom Material 3 inspired with these exact implementations:
-  - Glassmorphism: `backdrop-filter: blur(14px)` on cards, `blur(10px)` on surfaces
-  - Tonal surfaces: `background: rgba(16, 20, 43, 0.75)` for `.surface`, `linear-gradient(120deg, rgba(146, 122, 255, 0.36), rgba(58, 182, 255, 0.24))` for `.material-card`
-  - Rounded cards: `border-radius: 28px` (material-card), `24px` (surface), `16px` (KPI/dashboard), `14px` (quiz-item), `12px` (inputs)
+  - Glassmorphism: `backdrop-filter: blur(14px)` on cards (`.material-card`), `blur(10px)` on surfaces (`.surface`)
+  - Tonal surfaces: 
+    - `.surface`: `background: rgba(16, 20, 43, 0.75)`
+    - `.material-card`: `linear-gradient(120deg, rgba(146, 122, 255, 0.36), rgba(58, 182, 255, 0.24))`
+  - Rounded cards: 
+    - `border-radius: 28px` (`.material-card`)
+    - `border-radius: 24px` (`.surface`)
+    - `border-radius: 16px` (`.kpi`, `.dashboard-card`)
+    - `border-radius: 14px` (`.quiz-item`)
+    - `border-radius: 12px` (form inputs)
   - Pill CTAs: `border-radius: 999px` on `.pill-btn` and `.pill-btn-alt`
-  - Gradient animations: Animated gradient backgrounds in body using CSS variables
+  - Body background: Dual radial gradients:
+    - `#4b2f97` at 10% 0%
+    - `#0074a7` at 90% 20%
+    - Over `--background` (`#0f1022` light, `#0a0a0a` dark)
 - **Styling**: Tailwind CSS v4 with custom color palette - use these exact values:
   - Eyebrow text: `#d5c8ff` (light purple)
-  - Primary button (`pill-btn`): Background `#d6bcff`, text `#27174b` (dark purple)
-  - Secondary button (`pill-btn-alt`): Border `rgba(255, 255, 255, 0.26)`, background `rgba(255, 255, 255, 0.1)`, text `#fff`
+  - Primary button (`.pill-btn`): Background `#d6bcff`, text `#27174b` (dark purple)
+  - Secondary button (`.pill-btn-alt`): 
+    - Border: `rgba(255, 255, 255, 0.26)`
+    - Background: `rgba(255, 255, 255, 0.1)`
+    - Text: `#fff`
   - Progress bar gradient: `from-fuchsia-400 via-violet-400 to-cyan-300`
-  - Chip styling: Border `rgba(188, 181, 255, 0.45)`, background `rgba(188, 181, 255, 0.18)`
-  - Status dots: Done `rgba(29, 201, 152, 0.25)`, Pending `rgba(142, 166, 255, 0.25)`
-  - KPI cards: Background `rgba(255, 255, 255, 0.04)`, border `rgba(255, 255, 255, 0.14)`
-  - Dashboard cards: Background `rgba(255, 255, 255, 0.05)`, border `rgba(255, 255, 255, 0.16)`
-  - Body background: Dual radial gradients `#4b2f97` (10% 0%) and `#0074a7` (90% 20%) over `--background`
+  - Chip (`.chip`): 
+    - Border: `rgba(188, 181, 255, 0.45)`
+    - Background: `rgba(188, 181, 255, 0.18)`
+  - Status indicators:
+    - Done (`.status-done`): `background: rgba(29, 201, 152, 0.25)`
+    - Pending (`.status-pending`): `background: rgba(142, 166, 255, 0.25)`
+  - KPI cards (`.kpi`): 
+    - Background: `rgba(255, 255, 255, 0.04)`
+    - Border: `rgba(255, 255, 255, 0.14)`
+  - Dashboard cards (`.dashboard-card`): 
+    - Background: `rgba(255, 255, 255, 0.05)`
+    - Border: `rgba(255, 255, 255, 0.16)`
 - **Key Components** (use exact class names):
   - `pill-btn` - Primary CTA button style (Gen Z action words)
   - `pill-btn-alt` - Secondary button variant (outline style)
@@ -41,18 +61,18 @@
   - `variable: "--font-geist-sans"` for sans-serif
   - `variable: "--font-geist-mono"` for mono (used in layout)
 - **Mobile-first**: All layouts use `sm:` prefixes for mobile breakpoints, test at 320px width
-- **Gen Z Naming Conventions** (use EXACTLY these phrases):
-  - Eyebrow text: "AI Learning OS" (not "AI Learning System" or similar)
-  - Main brand: "LearnFlow AI" (not "LearnFlow" or "LearnFlowAI")
+- **Gen Z Naming Conventions** (use EXACTLY these phrases - NO substitutions):
+  - Eyebrow text: "AI Learning OS"
+  - Main brand: "LearnFlow AI"
   - Feature names: 
-    - "Smart Topic Input" (for topic/time/goal/style inputs)
-    - "AI Learning Pulse" (for confusion/confidence/mastery tracking)
-    - "Quiz + Revision Engine" (for quiz generation and weak area detection)
-    - "Dashboard: Learning Pulse Board" (for metrics overview)
+    - "Smart Topic Input" (topic/time/goal/style inputs section)
+    - "AI Learning Pulse" (confusion/confidence/mastery tracking section)
+    - "Quiz + Revision Engine" (quiz generation and weak area detection section)
+    - "Dashboard: Learning Pulse Board" (metrics overview section)
   - Button text (Gen Z action verbs):
-    - "Detect Confusion" (not "Check Understanding" or "Assess")
-    - "Generate AI Quiz" (not "Create Quiz" or "Start Quiz")
-    - "M3 Premium Mode" (not "Premium Features" or "Upgrade")
+    - "Detect Confusion" (NOT "Check Understanding" or "Assess")
+    - "Generate AI Quiz" (NOT "Create Quiz" or "Start Quiz")
+    - "M3 Premium Mode" (NOT "Premium Features" or "Upgrade")
   - Achievement names:
     - "Consistency Hero" (streak >= 5 days)
     - "On Fire" (streak < 5 days)
