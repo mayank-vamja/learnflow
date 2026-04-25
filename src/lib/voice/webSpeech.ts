@@ -3,7 +3,30 @@ export type SpeechSupport = {
   stt: boolean;
 };
 
-type SpeechRecognitionCtor = new () => SpeechRecognition;
+// Minimal Web Speech API typings (TS doesn't ship these by default).
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  maxAlternatives: number;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+type SpeechRecognitionEventLike = {
+  resultIndex: number;
+  results: Array<{
+    isFinal: boolean;
+    0?: { transcript?: string };
+  }>;
+};
+
+type SpeechRecognitionErrorEventLike = {
+  error?: string;
+};
 
 declare global {
   interface Window {
@@ -79,7 +102,7 @@ export function startListening(args: {
   };
 
   rec.onerror = (e) => {
-    args.onError?.(String((e as SpeechRecognitionErrorEvent).error ?? "speech_error"));
+    args.onError?.(String((e as SpeechRecognitionErrorEventLike).error ?? "speech_error"));
   };
 
   try {
