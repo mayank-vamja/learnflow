@@ -1,0 +1,190 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0f1022;
+  --foreground: #f5f7ff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background:
+    radial-gradient(circle at 10% 0%, #4b2f97 0%, transparent 30%),
+    radial-gradient(circle at 90% 20%, #0074a7 0%, transparent 22%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+.material-card {
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(120deg, rgba(146, 122, 255, 0.36), rgba(58, 182, 255, 0.24));
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 60px rgba(13, 12, 32, 0.45);
+}
+
+.surface {
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(16, 20, 43, 0.75);
+  backdrop-filter: blur(10px);
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #d5c8ff;
+}
+
+.pill-btn,
+.pill-btn-alt {
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.72rem 1rem;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.pill-btn {
+  background: #d6bcff;
+  color: #27174b;
+}
+
+.pill-btn-alt {
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.pill-btn:hover,
+.pill-btn-alt:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.pill-btn:disabled,
+.pill-btn-alt:disabled {
+  opacity: 0.55;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.pill-btn:focus-visible,
+.pill-btn-alt:focus-visible,
+.field input:focus-visible {
+  outline: 2px solid rgba(214, 188, 255, 0.7);
+  outline-offset: 2px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.81rem;
+  color: #d8dcff;
+}
+
+.field input {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff;
+  padding: 0.68rem 0.78rem;
+  outline: none;
+}
+
+.chip {
+  border-radius: 999px;
+  border: 1px solid rgba(188, 181, 255, 0.45);
+  background: rgba(188, 181, 255, 0.18);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.73rem;
+}
+
+.roadmap-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.8rem;
+}
+
+.status-done,
+.status-pending {
+  border-radius: 999px;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.56rem;
+}
+
+.status-done {
+  background: rgba(29, 201, 152, 0.25);
+}
+
+.status-pending {
+  background: rgba(142, 166, 255, 0.25);
+}
+
+.kpi {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.8rem;
+}
+
+.kpi p {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.kpi strong {
+  font-size: 1.2rem;
+}
+
+.quiz-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.7rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.quiz-item span {
+  font-weight: 700;
+  color: #d9cbff;
+}
+
+.dashboard-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.8rem;
+}
+
+.dashboard-card p {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.dashboard-card strong {
+  margin-top: 0.2rem;
+  display: block;
+  font-size: 1rem;
+}
