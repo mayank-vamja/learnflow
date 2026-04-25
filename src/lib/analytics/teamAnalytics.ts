@@ -19,6 +19,12 @@ export type TeamAnalytics = {
   masteryBuckets: { name: string; value: number }[];
   weakAreas: { weakArea: string; count: number }[];
   completionSeries: { name: string; completion: number }[];
+  usage: {
+    videoPlays: number;
+    voiceAttempts: number;
+    voiceSuccess: number;
+    voiceSuccessRate: number;
+  };
 };
 
 function clamp(n: number, min: number, max: number) {
@@ -81,6 +87,11 @@ export function computeTeamAnalytics(model: OrgModelV1): TeamAnalytics {
     .sort((a, b) => b.completion - a.completion)
     .map((r) => ({ name: r.learnerName, completion: r.completion }));
 
-  return { rows, masteryBuckets, weakAreas, completionSeries };
+  const videoPlays = model.events.filter((e) => e.type === "video").length;
+  const voiceAttempts = model.events.filter((e) => e.type === "voice").length;
+  const voiceSuccess = model.events.filter((e) => e.type === "voice" && e.correct === true).length;
+  const voiceSuccessRate = voiceAttempts ? Math.round((voiceSuccess / voiceAttempts) * 100) : 0;
+
+  return { rows, masteryBuckets, weakAreas, completionSeries, usage: { videoPlays, voiceAttempts, voiceSuccess, voiceSuccessRate } };
 }
 

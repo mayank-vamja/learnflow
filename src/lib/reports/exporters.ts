@@ -31,6 +31,7 @@ export function buildReportPayload(model: OrgModelV1) {
     learners: analytics.rows,
     weakAreas: analytics.weakAreas,
     masteryBuckets: analytics.masteryBuckets,
+    usage: analytics.usage,
     events: model.events.slice(0, 200),
   };
 }
@@ -48,6 +49,9 @@ export function buildReportRowsForCSV(model: OrgModelV1) {
     streak: r.streak,
     weakArea: r.weakArea,
     lastUpdatedAt: new Date(r.lastUpdatedAt).toISOString(),
+    team_videoPlays: analytics.usage.videoPlays,
+    team_voiceAttempts: analytics.usage.voiceAttempts,
+    team_voiceSuccessRate: analytics.usage.voiceSuccessRate,
   }));
 }
 

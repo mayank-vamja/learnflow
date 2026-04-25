@@ -72,6 +72,19 @@ export default function ReportsPage() {
             </div>
           </div>
 
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="dashboard-card">
+              <p>Video plays</p>
+              <strong>{analytics.usage.videoPlays}</strong>
+            </div>
+            <div className="dashboard-card">
+              <p>Voice success</p>
+              <strong>
+                {analytics.usage.voiceSuccessRate}% ({analytics.usage.voiceSuccess}/{analytics.usage.voiceAttempts})
+              </strong>
+            </div>
+          </div>
+
           <div className="mt-5">
             <p className="text-xs uppercase tracking-wider text-violet-200">Learner snapshot</p>
             <div className="mt-3 space-y-2">

@@ -127,6 +127,16 @@ export default function AdminPage() {
               <p>Risk flags</p>
               <strong>{model.events.filter((e) => e.type === "quickCheck" && e.correct === false).length}</strong>
             </div>
+            <div className="dashboard-card">
+              <p>Video plays</p>
+              <strong>{analytics.usage.videoPlays}</strong>
+            </div>
+            <div className="dashboard-card">
+              <p>Voice success</p>
+              <strong>
+                {analytics.usage.voiceSuccessRate}% ({analytics.usage.voiceSuccess}/{analytics.usage.voiceAttempts})
+              </strong>
+            </div>
           </div>
 
           <div className="mt-5">

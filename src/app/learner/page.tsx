@@ -1,11 +1,43 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "../components/AppShell";
-import { computeWeeksEstimate, chooseTargetMode, gradeQuickCheck, parseDailyMinutes, applyPulse, computeCompletion } from "@/lib/learning/engine";
+import {
+  computeWeeksEstimate,
+  chooseTargetMode,
+  gradeQuickCheck,
+  parseDailyMinutes,
+  applyPulse,
+  computeCompletion,
+  gradeVoiceTranscript,
+} from "@/lib/learning/engine";
 import { conceptPacks, guessPackId, roadmapDetailsByPack, type PulseMode } from "@/lib/learning/packs";
+import { YouTubeEmbed } from "../components/YouTubeEmbed";
+import { getSpeechSupport, speak, startListening, stopSpeak, type ListeningSession } from "@/lib/voice/webSpeech";
+import {
+  addEvent,
+  getSelectedLearner,
+  loadModel,
+  makeId,
+  recomputeCompletion,
+  saveModel,
+  type OrgModelV1,
+  upsertLearnerProgress,
+} from "@/lib/storage/localModel";
 
 export default function LearnerPage() {
+  const [model, setModel] = useState<OrgModelV1>(() => loadModel());
+  useEffect(() => {
+    saveModel(model);
+  }, [model]);
+
+  const selectedLearner = useMemo(() => getSelectedLearner(model), [model]);
+  const selectedAssignment = useMemo(() => {
+    if (!selectedLearner) return null;
+    return model.assignments.find((a) => a.learnerId === selectedLearner.id) ?? null;
+  }, [model, selectedLearner]);
+
+  const assignedPackId = selectedAssignment?.packId ?? null;
   const [topic, setTopic] = useState("I want to learn Kubernetes");
   const [dailyTime, setDailyTime] = useState("30 min");
   const [goal, setGoal] = useState("Technical interview");
@@ -26,14 +58,19 @@ export default function LearnerPage() {
   >(null);
   const [pace, setPace] = useState<"Chill" | "Balanced" | "Grind">("Balanced");
   const [selectedRoadmapId, setSelectedRoadmapId] = useState<number | null>(null);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [activeChips, setActiveChips] = useState<Record<"Roadmap" | "Micro Lessons" | "Mentor" | "Quiz Mode", boolean>>({
     Roadmap: true,
     "Micro Lessons": true,
     Mentor: false,
     "Quiz Mode": true,
   });
+  const [voiceTranscript, setVoiceTranscript] = useState("");
+  const [voicePartial, setVoicePartial] = useState("");
+  const [voiceStatus, setVoiceStatus] = useState<"idle" | "listening" | "speaking" | "unsupported">("idle");
+  const listeningRef = useRef<ListeningSession | null>(null);
 
-  const packId = useMemo(() => guessPackId(topic), [topic]);
+  const packId = useMemo(() => (assignedPackId ? assignedPackId : guessPackId(topic)), [assignedPackId, topic]);
   const pack = useMemo(() => conceptPacks.find((p) => p.id === packId) ?? conceptPacks[0], [packId]);
   const dailyMinutes = useMemo(() => parseDailyMinutes(dailyTime), [dailyTime]);
   const weeksEstimate = useMemo(() => computeWeeksEstimate(pack.roadmap.length + pack.lessons.length, dailyMinutes), [pack, dailyMinutes]);
@@ -58,6 +95,7 @@ export default function LearnerPage() {
     setQuizScore(null);
     setSessionLessonIdx(0);
     setSelectedRoadmapId(null);
+    setSelectedVideoUrl(null);
     setStep(1);
     setPulseMode("Simple");
     setWeakArea("Rollout confidence");
@@ -65,6 +103,64 @@ export default function LearnerPage() {
     setConfidence(42);
     setMastery(35);
     setStreak(4);
+    setVoiceTranscript("");
+    setVoicePartial("");
+    listeningRef.current?.stop();
+    listeningRef.current = null;
+    stopSpeak();
+    setVoiceStatus("idle");
+  };
+
+  const progressFromModel = useMemo(() => {
+    if (!selectedLearner || !selectedAssignment) return null;
+    return model.progress.find((x) => x.learnerId === selectedLearner.id && x.packId === selectedAssignment.packId) ?? null;
+  }, [model, selectedLearner, selectedAssignment]);
+
+  // Avoid setState-in-effect lint rule by only syncing on explicit refresh action.
+  const syncFromModel = () => {
+    if (!selectedLearner || !selectedAssignment || !progressFromModel) return;
+    setSessionLessonIdx(progressFromModel.sessionLessonIdx);
+    setConfusion(progressFromModel.metrics.confusion);
+    setConfidence(progressFromModel.metrics.confidence);
+    setMastery(progressFromModel.metrics.mastery);
+    setStreak(progressFromModel.metrics.streak);
+    setWeakArea(progressFromModel.metrics.weakArea);
+    setQuizScore(progressFromModel.quizScore);
+    setDailyTime(`${selectedAssignment.dailyMinutes} min`);
+  };
+
+  const persistProgress = (next: {
+    sessionLessonIdx?: number;
+    confusion?: number;
+    confidence?: number;
+    mastery?: number;
+    streak?: number;
+    weakArea?: string;
+    quizScore?: number | null;
+  }) => {
+    if (!selectedLearner) return;
+    const packKey = pack.id;
+    const current = model.progress.find((p) => p.learnerId === selectedLearner.id && p.packId === packKey);
+    const merged = {
+      learnerId: selectedLearner.id,
+      packId: packKey,
+      sessionLessonIdx: next.sessionLessonIdx ?? current?.sessionLessonIdx ?? sessionLessonIdx,
+      metrics: {
+        confusion: next.confusion ?? current?.metrics.confusion ?? confusion,
+        confidence: next.confidence ?? current?.metrics.confidence ?? confidence,
+        mastery: next.mastery ?? current?.metrics.mastery ?? mastery,
+        streak: next.streak ?? current?.metrics.streak ?? streak,
+        weakArea: next.weakArea ?? current?.metrics.weakArea ?? weakArea,
+        completion: recomputeCompletion({
+          mastery: next.mastery ?? current?.metrics.mastery ?? mastery,
+          confidence: next.confidence ?? current?.metrics.confidence ?? confidence,
+        }),
+      },
+      quizScore: next.quizScore ?? current?.quizScore ?? quizScore,
+      lastUpdatedAt: Date.now(),
+    };
+
+    setModel((m) => upsertLearnerProgress(m, merged));
   };
 
   const lessonText = useMemo(() => {
@@ -91,6 +187,20 @@ export default function LearnerPage() {
     const res = applyPulse({ confusion, confidence }, pace);
     setConfusion(res.next.confusion);
     setConfidence(res.next.confidence);
+    persistProgress({ confusion: res.next.confusion, confidence: res.next.confidence });
+    if (selectedLearner) {
+      setModel((m) =>
+        addEvent(m, {
+          id: makeId("evt"),
+          learnerId: selectedLearner.id,
+          packId: pack.id,
+          lessonId: activeLesson?.id ?? "pulse",
+          ts: Date.now(),
+          type: "pulse",
+          delta: res.delta,
+        }),
+      );
+    }
   };
 
   const submitQuickCheck = () => {
@@ -118,12 +228,133 @@ export default function LearnerPage() {
     setQuizScore(res.score);
     setStep(4);
     setPulseMode(targetMode);
+
+    persistProgress({
+      confusion: res.nextMetrics.confusion,
+      confidence: res.nextMetrics.confidence,
+      mastery: res.nextMetrics.mastery,
+      streak: res.nextMetrics.streak,
+      weakArea: res.nextMetrics.weakArea,
+      quizScore: res.score,
+    });
+    if (selectedLearner) {
+      setModel((m) =>
+        addEvent(m, {
+          id: makeId("evt"),
+          learnerId: selectedLearner.id,
+          packId: pack.id,
+          lessonId: activeLesson.id,
+          ts: Date.now(),
+          type: "quickCheck",
+          correct: res.correct,
+          weakArea: res.nextMetrics.weakArea,
+          delta: res.delta,
+        }),
+      );
+    }
   };
 
   const nextLesson = () => {
     setSelectedAnswer(null);
     setLastCheck(null);
     setSessionLessonIdx((prev) => Math.min(pack.lessons.length - 1, prev + 1));
+    const nextIdx = Math.min(pack.lessons.length - 1, sessionLessonIdx + 1);
+    persistProgress({ sessionLessonIdx: nextIdx });
+  };
+
+  const voiceSupport = useMemo(() => getSpeechSupport(), []);
+
+  const startVoice = () => {
+    if (!voiceSupport.stt) {
+      setVoiceStatus("unsupported");
+      return;
+    }
+    listeningRef.current?.stop();
+    setVoicePartial("");
+    setVoiceTranscript("");
+    setVoiceStatus("listening");
+    listeningRef.current = startListening({
+      onPartial: (t) => setVoicePartial(t),
+      onFinal: (t) => setVoiceTranscript((p) => (p ? `${p} ${t}` : t)),
+      onError: () => setVoiceStatus("idle"),
+    });
+    if (!listeningRef.current) setVoiceStatus("unsupported");
+  };
+
+  const stopVoice = () => {
+    listeningRef.current?.stop();
+    listeningRef.current = null;
+    setVoiceStatus("idle");
+  };
+
+  const speakLesson = () => {
+    if (!voiceSupport.tts) {
+      setVoiceStatus("unsupported");
+      return;
+    }
+    const ok = speak(lessonText);
+    setVoiceStatus(ok ? "speaking" : "unsupported");
+  };
+
+  const gradeVoice = () => {
+    if (!activeLesson) return;
+    const transcript = (voiceTranscript || voicePartial).trim();
+    if (!transcript) return;
+    const keywords = activeLesson.checkpoint.keywords ?? [];
+    const antiKeywords = activeLesson.checkpoint.antiKeywords ?? [];
+    if (!keywords.length) return;
+
+    const res = gradeVoiceTranscript({
+      lesson: activeLesson,
+      transcript,
+      pace,
+      prevMetrics: { confusion, confidence, mastery, streak, weakArea },
+      keywords,
+      antiKeywords,
+    });
+
+    setLastCheck({
+      correct: res.correct,
+      lessonId: activeLesson.id,
+      weakArea: activeLesson.checkpoint.weakArea,
+      scoreDelta: res.score - Math.round((confidence + (100 - confusion)) / 2),
+      message: `${res.message} (keyword hits: ${res.match.hits}/${res.match.total})`,
+    });
+
+    setConfusion(res.nextMetrics.confusion);
+    setConfidence(res.nextMetrics.confidence);
+    setMastery(res.nextMetrics.mastery);
+    setStreak(res.nextMetrics.streak);
+    setWeakArea(res.nextMetrics.weakArea);
+    setQuizScore(res.score);
+    setStep(4);
+    setPulseMode(targetMode);
+
+    persistProgress({
+      confusion: res.nextMetrics.confusion,
+      confidence: res.nextMetrics.confidence,
+      mastery: res.nextMetrics.mastery,
+      streak: res.nextMetrics.streak,
+      weakArea: res.nextMetrics.weakArea,
+      quizScore: res.score,
+    });
+
+    if (selectedLearner) {
+      setModel((m) =>
+        addEvent(m, {
+          id: makeId("evt"),
+          learnerId: selectedLearner.id,
+          packId: pack.id,
+          lessonId: activeLesson.id,
+          ts: Date.now(),
+          type: "voice",
+          correct: res.correct,
+          weakArea: res.nextMetrics.weakArea,
+          transcript,
+          delta: res.delta,
+        }),
+      );
+    }
   };
 
   return (
@@ -131,6 +362,29 @@ export default function LearnerPage() {
       <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <article className="surface p-4 sm:p-6">
           <h2 className="text-lg font-semibold">1) Smart Topic Input</h2>
+          {selectedLearner && selectedAssignment ? (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="dashboard-card">
+                <p>Assigned plan</p>
+                <strong>
+                  {selectedLearner.name} · {selectedAssignment.packId.toUpperCase()} · {selectedAssignment.dailyMinutes}m/day
+                </strong>
+              </div>
+              <button
+                className="pill-btn-alt"
+                type="button"
+                onClick={() => {
+                  setModel(loadModel());
+                  // After load, sync from model snapshot (best-effort for demo).
+                  setTimeout(syncFromModel, 0);
+                }}
+              >
+                Refresh assignment
+              </button>
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-white/80">No learner selected yet. Create/select one in Admin.</p>
+          )}
           <div className="mt-4 grid gap-3">
             <label className="field">
               Topic
@@ -140,6 +394,7 @@ export default function LearnerPage() {
                   setTopic(e.target.value);
                   softResetLoop();
                 }}
+                disabled={Boolean(assignedPackId)}
               />
             </label>
             <div className="grid gap-3 sm:grid-cols-3">
@@ -308,6 +563,49 @@ export default function LearnerPage() {
                 </div>
               </div>
 
+              {selectedRoadmapDetail.videos?.length ? (
+                <div className="mt-4">
+                  <p className="text-xs uppercase tracking-wider text-violet-200">Video lesson</p>
+                  <div className="mt-2 grid gap-2">
+                    {selectedRoadmapDetail.videos.map((v) => (
+                      <div className="roadmap-row" key={v.url}>
+                        <div>
+                          <p className="font-medium">{v.title}</p>
+                          <p className="text-xs text-white/70">{v.durationMin ? `${v.durationMin} min` : "Video"}</p>
+                        </div>
+                        <button
+                          className="pill-btn-alt"
+                          type="button"
+                          onClick={() => {
+                            setSelectedVideoUrl(v.url);
+                            if (selectedLearner) {
+                              setModel((m) =>
+                                addEvent(m, {
+                                  id: makeId("evt"),
+                                  learnerId: selectedLearner.id,
+                                  packId: pack.id,
+                                  lessonId: String(selectedRoadmapDetail.roadmapId),
+                                  ts: Date.now(),
+                                  type: "video",
+                                  videoUrl: v.url,
+                                }),
+                              );
+                            }
+                          }}
+                        >
+                          Watch
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {selectedVideoUrl ? (
+                    <div className="mt-3">
+                      <YouTubeEmbed url={selectedVideoUrl} title="LearnFlow AI video lesson" />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
               <div className="mt-4 flex flex-wrap gap-3">
                 <button
                   className="pill-btn"
@@ -415,6 +713,48 @@ export default function LearnerPage() {
             <div className="dashboard-card">
               <p>Mode Next</p>
               <strong>{targetMode} Explanation</strong>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-3xl border border-white/15 bg-black/20 p-4">
+            <p className="text-xs uppercase tracking-wider text-violet-200">Voice Tutor</p>
+            <p className="mt-1 text-sm text-white/80">Speak + listen + keyword grading (demo-safe, no backend).</p>
+
+            {voiceSupport.tts || voiceSupport.stt ? null : (
+              <p className="mt-2 text-sm text-white/70">Voice is not supported in this browser.</p>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-3">
+              <button className="pill-btn-alt" type="button" onClick={speakLesson} disabled={!voiceSupport.tts}>
+                Speak lesson
+              </button>
+              <button className="pill-btn" type="button" onClick={startVoice} disabled={!voiceSupport.stt || voiceStatus === "listening"}>
+                Listen
+              </button>
+              <button className="pill-btn-alt" type="button" onClick={stopVoice} disabled={voiceStatus !== "listening"}>
+                Stop
+              </button>
+              <button className="pill-btn" type="button" onClick={gradeVoice} disabled={!activeLesson}>
+                Grade voice answer
+              </button>
+            </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="dashboard-card">
+                <p>Status</p>
+                <strong>{voiceStatus}</strong>
+              </div>
+              <div className="dashboard-card">
+                <p>Keywords</p>
+                <strong>{activeLesson?.checkpoint.keywords?.slice(0, 3).join(", ") || "—"}</strong>
+              </div>
+            </div>
+
+            <div className="mt-3">
+              <p className="text-xs uppercase tracking-wider text-violet-200">Transcript</p>
+              <div className="mt-2 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/85">
+                {(voiceTranscript || voicePartial || "Tap Listen and speak your answer.").trim()}
+              </div>
             </div>
           </div>
         </article>

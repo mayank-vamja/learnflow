@@ -32,10 +32,12 @@ export type SessionEvent = {
   packId: PackId;
   lessonId: string;
   ts: number;
-  type: "pulse" | "quickCheck";
+  type: "pulse" | "quickCheck" | "voice" | "video";
   correct?: boolean;
   delta?: { confusion?: number; confidence?: number; mastery?: number; streak?: number };
   weakArea?: string;
+  transcript?: string;
+  videoUrl?: string;
 };
 
 export type LearnerProgress = {

@@ -17,6 +17,8 @@ export type LessonCard = {
     prompt: string;
     options: { id: "a" | "b" | "c" | "d"; label: string; correct: boolean }[];
     weakArea: string;
+    keywords?: string[];
+    antiKeywords?: string[];
   };
 };
 
@@ -33,6 +35,7 @@ export type RoadmapDetail = {
   outcomes: string[];
   miniChallenge: string;
   estimatedMinutes: number;
+  videos?: { title: string; url: string; durationMin?: number }[];
 };
 
 export const conceptPacks: ConceptPack[] = [
@@ -64,6 +67,8 @@ export const conceptPacks: ConceptPack[] = [
             { id: "d", label: "ConfigMap", correct: false },
           ],
           weakArea: "desired state vs current state",
+          keywords: ["deployment", "desired", "replicas"],
+          antiKeywords: ["service", "configmap"],
         },
       },
       {
@@ -83,6 +88,8 @@ export const conceptPacks: ConceptPack[] = [
             { id: "d", label: "A ConfigMap scales it back up", correct: false },
           ],
           weakArea: "self-healing + replicas",
+          keywords: ["new pod", "recreate", "restore", "replicas"],
+          antiKeywords: ["manual", "service deletes", "configmap"],
         },
       },
     ],
@@ -115,6 +122,8 @@ export const conceptPacks: ConceptPack[] = [
             { id: "d", label: "LIMIT", correct: false },
           ],
           weakArea: "group filtering",
+          keywords: ["having", "count", "group"],
+          antiKeywords: ["where"],
         },
       },
       {
@@ -134,6 +143,8 @@ export const conceptPacks: ConceptPack[] = [
             { id: "d", label: "RIGHT JOIN", correct: false },
           ],
           weakArea: "join semantics",
+          keywords: ["left join", "left outer"],
+          antiKeywords: ["inner join", "cross join"],
         },
       },
     ],
@@ -148,6 +159,9 @@ export const roadmapDetailsByPack: Record<ConceptPack["id"], RoadmapDetail[]> = 
       outcomes: ["Know what Kubernetes manages (and what it doesn’t)", "Explain cluster vs node vs workload", "Spot the right abstraction quickly"],
       miniChallenge: "Explain Kubernetes in 1 sentence, then expand to 3 sentences.",
       estimatedMinutes: 35,
+      videos: [
+        { title: "Kubernetes explained (quick intro)", url: "https://www.youtube.com/watch?v=X48VuDVv0do", durationMin: 8 },
+      ],
     },
     {
       roadmapId: 2,
@@ -155,6 +169,9 @@ export const roadmapDetailsByPack: Record<ConceptPack["id"], RoadmapDetail[]> = 
       outcomes: ["Define Pod vs Deployment", "Understand replicas/self-healing", "Recognize rollout strategy at a glance"],
       miniChallenge: "If replicas=3 and one Pod dies, describe what restores the count.",
       estimatedMinutes: 45,
+      videos: [
+        { title: "Pods vs Deployments (mental model)", url: "https://www.youtube.com/watch?v=2vMEQ5zs1ko", durationMin: 10 },
+      ],
     },
     {
       roadmapId: 3,
@@ -162,6 +179,9 @@ export const roadmapDetailsByPack: Record<ConceptPack["id"], RoadmapDetail[]> = 
       outcomes: ["Choose ClusterIP vs LoadBalancer vs Ingress", "Describe service discovery", "Understand traffic flow"],
       miniChallenge: "Sketch the path: user → ingress → service → pod.",
       estimatedMinutes: 55,
+      videos: [
+        { title: "Services & Ingress (traffic flow)", url: "https://www.youtube.com/watch?v=0Omvgd7Hg1I", durationMin: 9 },
+      ],
     },
     {
       roadmapId: 4,
@@ -169,6 +189,9 @@ export const roadmapDetailsByPack: Record<ConceptPack["id"], RoadmapDetail[]> = 
       outcomes: ["Use ConfigMaps for config", "Use Secrets for sensitive data", "Know when to attach volumes"],
       miniChallenge: "Name 2 things that should never live in an image.",
       estimatedMinutes: 55,
+      videos: [
+        { title: "ConfigMaps & Secrets (practical intro)", url: "https://www.youtube.com/watch?v=8VK9NJ3pObU", durationMin: 11 },
+      ],
     },
     {
       roadmapId: 5,
@@ -176,6 +199,9 @@ export const roadmapDetailsByPack: Record<ConceptPack["id"], RoadmapDetail[]> = 
       outcomes: ["Read basic metrics and logs", "Understand HPA conceptually", "Debug rollout failures"],
       miniChallenge: "List the first 3 things you check when a rollout fails.",
       estimatedMinutes: 60,
+      videos: [
+        { title: "Debugging Kubernetes workloads", url: "https://www.youtube.com/watch?v=O4p3W0xHf0A", durationMin: 12 },
+      ],
     },
   ],
   sql: [
@@ -185,6 +211,9 @@ export const roadmapDetailsByPack: Record<ConceptPack["id"], RoadmapDetail[]> = 
       outcomes: ["Write clean SELECT statements", "Filter with WHERE safely", "Sort + paginate reliably"],
       miniChallenge: "Write a query that returns top 10 newest users from India.",
       estimatedMinutes: 40,
+      videos: [
+        { title: "SQL SELECT + WHERE basics", url: "https://www.youtube.com/watch?v=7S_tz1z_5bA", durationMin: 12 },
+      ],
     },
     {
       roadmapId: 2,
@@ -192,6 +221,9 @@ export const roadmapDetailsByPack: Record<ConceptPack["id"], RoadmapDetail[]> = 
       outcomes: ["INNER vs LEFT join", "Predict row counts", "Know where NULLs appear"],
       miniChallenge: "When does LEFT JOIN produce NULLs on the right side?",
       estimatedMinutes: 55,
+      videos: [
+        { title: "SQL JOINs explained", url: "https://www.youtube.com/watch?v=9yeOJ0ZMUYw", durationMin: 14 },
+      ],
     },
     {
       roadmapId: 3,
@@ -199,6 +231,9 @@ export const roadmapDetailsByPack: Record<ConceptPack["id"], RoadmapDetail[]> = 
       outcomes: ["Group correctly", "Use HAVING vs WHERE", "Read aggregate results confidently"],
       miniChallenge: "Find products with at least 5 orders (hint: HAVING).",
       estimatedMinutes: 55,
+      videos: [
+        { title: "GROUP BY + HAVING (clear explanation)", url: "https://www.youtube.com/watch?v=9UrQm9zVnkk", durationMin: 13 },
+      ],
     },
     {
       roadmapId: 4,
@@ -206,6 +241,9 @@ export const roadmapDetailsByPack: Record<ConceptPack["id"], RoadmapDetail[]> = 
       outcomes: ["Know when indexes help", "Understand basic query plan outputs", "Avoid common anti-patterns"],
       miniChallenge: "Why can an index be ignored even if it exists?",
       estimatedMinutes: 65,
+      videos: [
+        { title: "Indexes & query plans (intro)", url: "https://www.youtube.com/watch?v=HubezKbFL7E", durationMin: 15 },
+      ],
     },
     {
       roadmapId: 5,
@@ -213,6 +251,9 @@ export const roadmapDetailsByPack: Record<ConceptPack["id"], RoadmapDetail[]> = 
       outcomes: ["Understand ACID basics", "Pick the right isolation trade-off", "Avoid write anomalies"],
       miniChallenge: "Describe a real-world example of a race condition in payments.",
       estimatedMinutes: 70,
+      videos: [
+        { title: "SQL transactions (ACID + isolation)", url: "https://www.youtube.com/watch?v=6G7G7Fh3K6Y", durationMin: 16 },
+      ],
     },
   ],
 };
