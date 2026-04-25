@@ -28,6 +28,15 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+.material-card,
+.surface,
+.dashboard-card,
+.kpi,
+.quiz-item,
+.roadmap-row {
+  -webkit-backdrop-filter: blur(10px);
+}
+
 .material-card {
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -107,12 +116,31 @@ body {
   outline: none;
 }
 
+.field input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
 .chip {
   border-radius: 999px;
   border: 1px solid rgba(188, 181, 255, 0.45);
   background: rgba(188, 181, 255, 0.18);
   padding: 0.3rem 0.7rem;
   font-size: 0.73rem;
+  transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+}
+
+.chip:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+.chip:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.chip-active {
+  background: rgba(214, 188, 255, 0.28);
+  border-color: rgba(214, 188, 255, 0.55);
 }
 
 .roadmap-row {
